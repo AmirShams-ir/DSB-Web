@@ -14,6 +14,10 @@ Open `index.html` and use it locally.
 
 ![Screenshot](https://github.com/AmirShams-ir/DSB-Web/blob/master/assets/DSB.png)
 
+## 🌐 Live Demo
+
+https://amirshams-ir.github.io/DSB-Web/
+
 ---
 
 ## ✨ Features
@@ -325,6 +329,13 @@ This software is provided without warranty.
 Cryptocurrency recovery is unforgiving. A forgotten password, damaged storage device, incorrect seed phrase, or operational mistake may result in permanent loss of funds.
 
 Always verify the entire backup and recovery workflow before relying on it with real assets.
+
+---
+## 📜 License
+
+This project is licensed under the Apache License 2.0.
+
+See the LICENSE file for details.
 
 ---
 
