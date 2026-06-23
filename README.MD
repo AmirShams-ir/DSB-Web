@@ -331,6 +331,7 @@ Cryptocurrency recovery is unforgiving. A forgotten password, damaged storage de
 Always verify the entire backup and recovery workflow before relying on it with real assets.
 
 ---
+
 ## 📜 License
 
 This project is licensed under the Apache License 2.0.
@@ -344,5 +345,7 @@ See the LICENSE file for details.
 ### Fully Offline · Dependency-Free · Cross Platform
 
 Built for one job: keep a readable seed phrase out of a readable file.
+
+Built by Amir Shams, With assistance from OpenAI ChatGPT
 
 </div>
