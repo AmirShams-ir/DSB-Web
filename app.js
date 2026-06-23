@@ -26,5 +26,3 @@ document
 
         alert("Decrypt coming soon 🚀");
     });
-
-    testCrypto();

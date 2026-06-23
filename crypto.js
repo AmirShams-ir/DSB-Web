@@ -44,9 +44,6 @@ function toHex(bytes) {
 const salt = randomBytes(16);
 const nonce = randomBytes(12);
 
-console.log("Salt:", toHex(salt));
-console.log("Nonce:", toHex(nonce));
-
 function concatArrays(...arrays) {
 
     let total = arrays.reduce(
@@ -97,11 +94,147 @@ function packPlaintext(seedText) {
     );
 }
 
-const payload = packPlaintext(
-    "abandon|ability|able"
-);
+const MAGIC = new Uint8Array([
+    0xD5, 0x42, 0x02, 0xA7
+]);
 
-console.log(
-    "Payload Length:",
-    payload.length
-);
+const VERSION = 2;
+const FLAGS = 0;
+
+function uint32ToBytes(value) {
+
+    const bytes = new Uint8Array(4);
+
+    bytes[0] = (value >>> 24) & 0xff;
+    bytes[1] = (value >>> 16) & 0xff;
+    bytes[2] = (value >>> 8) & 0xff;
+    bytes[3] = value & 0xff;
+
+    return bytes;
+}
+
+async function deriveKey(password, salt) {
+
+    const result = await argon2.hash({
+        pass: password,
+        salt: salt,
+        time: 3,
+        mem: 65536,
+        parallelism: 2,
+        hashLen: 32,
+        type: argon2.ArgonType.Argon2id
+    });
+
+    return result.hash;
+}
+
+function buildHeader(
+    salt,
+    nonce,
+    ciphertextLength
+) {
+
+    return concatArrays(
+        MAGIC,
+        new Uint8Array([VERSION]),
+        new Uint8Array([FLAGS]),
+        salt,
+        nonce,
+        uint32ToBytes(ciphertextLength)
+    );
+}
+
+async function encryptSeed(
+    seedText,
+    password
+) {
+
+    const salt = randomBytes(16);
+
+    const nonce = randomBytes(12);
+
+    const payload =
+        packPlaintext(seedText);
+
+    const keyBytes =
+        await deriveKey(
+            password,
+            salt
+        );
+
+    const cryptoKey =
+        await crypto.subtle.importKey(
+            "raw",
+            keyBytes,
+            {
+                name: "AES-GCM"
+            },
+            false,
+            ["encrypt"]
+        );
+
+    const tempHeader =
+        buildHeader(
+            salt,
+            nonce,
+            payload.length + 16
+        );
+
+    const encrypted =
+        await crypto.subtle.encrypt(
+            {
+                name: "AES-GCM",
+                iv: nonce,
+                additionalData: tempHeader
+            },
+            cryptoKey,
+            payload
+        );
+
+    const ciphertext =
+        new Uint8Array(encrypted);
+
+    const finalHeader =
+        buildHeader(
+            salt,
+            nonce,
+            ciphertext.length
+        );
+
+    return concatArrays(
+        finalHeader,
+        ciphertext
+    );
+}
+
+function downloadFile(
+    bytes,
+    filename
+) {
+
+    const blob =
+        new Blob(
+            [bytes],
+            {
+                type:
+                "application/octet-stream"
+            }
+        );
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const a =
+        document.createElement("a");
+
+    a.href = url;
+    a.download = filename;
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    URL.revokeObjectURL(url);
+}
