@@ -12,7 +12,7 @@ No telemetry.
 
 Open `index.html` and use it locally.
 
-![alt text](http://url/to/img.png)
+![Screenshot](https://github.com/AmirShams-ir/DSB-Web/blob/master/assets/DSB.png)
 
 ---
 
