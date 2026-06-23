@@ -12,17 +12,3 @@ for (let i = 1; i <= 25; i++) {
 
     seedGrid.appendChild(input);
 }
-
-document
-    .getElementById("encrypt-btn")
-    .addEventListener("click", () => {
-
-        alert("Encrypt coming soon 🚀");
-    });
-
-document
-    .getElementById("decrypt-btn")
-    .addEventListener("click", () => {
-
-        alert("Decrypt coming soon 🚀");
-    });

@@ -238,3 +238,304 @@ function downloadFile(
 
     URL.revokeObjectURL(url);
 }
+
+document
+    .getElementById("encrypt-btn")
+    .addEventListener(
+        "click",
+        async () => {
+
+            try {
+
+                const inputs =
+                    document.querySelectorAll(
+                        "#seed-grid input"
+                    );
+
+                const words = [];
+
+                for (
+                    let i = 0;
+                    i < 24;
+                    i++
+                ) {
+
+                    const word =
+                        inputs[i]
+                        .value
+                        .trim()
+                        .toLowerCase();
+
+                    if (!word) {
+
+                        alert(
+                            `Word ${i + 1} is empty`
+                        );
+
+                        return;
+                    }
+
+                    words.push(word);
+                }
+
+                const optionalWord =
+                    inputs[24]
+                    .value
+                    .trim();
+
+                if (optionalWord) {
+                    words.push(optionalWord);
+                }
+
+                const password =
+                    document
+                    .getElementById(
+                        "password"
+                    )
+                    .value;
+
+                const confirmPassword =
+                    document
+                    .getElementById(
+                        "confirm-password"
+                    )
+                    .value;
+
+                if (
+                    password !==
+                    confirmPassword
+                ) {
+
+                    alert(
+                        "Passwords do not match"
+                    );
+
+                    return;
+                }
+
+                if (
+                    password.length < 12
+                ) {
+
+                    alert(
+                        "Password too short"
+                    );
+
+                    return;
+                }
+
+                const seedText =
+                    words.join("|");
+
+                const file =
+                    await encryptSeed(
+                        seedText,
+                        password
+                    );
+
+                downloadFile(
+                    file,
+                    "seed.bin"
+                );
+
+                alert(
+                    "Backup encrypted successfully"
+                );
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "Encryption failed"
+                );
+            }
+        }
+    );
+
+    const HEADER_SIZE = 38;
+
+function bytesToUint32(bytes) {
+
+    return (
+        (bytes[0] << 24) |
+        (bytes[1] << 16) |
+        (bytes[2] << 8) |
+        bytes[3]
+    ) >>> 0;
+}
+
+function arraysEqual(a, b) {
+
+    if (a.length !== b.length) {
+        return false;
+    }
+
+    for (let i = 0; i < a.length; i++) {
+
+        if (a[i] !== b[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function parseHeader(fileBytes) {
+
+    if (fileBytes.length < HEADER_SIZE) {
+        throw new Error(
+            "Invalid encrypted backup"
+        );
+    }
+
+    const magic =
+        fileBytes.slice(0, 4);
+
+    if (
+        !arraysEqual(
+            magic,
+            MAGIC
+        )
+    ) {
+
+        throw new Error(
+            "Unsupported encrypted backup format"
+        );
+    }
+
+    const version =
+        fileBytes[4];
+
+    const flags =
+        fileBytes[5];
+
+    if (
+        version !== VERSION ||
+        flags !== FLAGS
+    ) {
+
+        throw new Error(
+            "Unsupported encrypted backup format"
+        );
+    }
+
+    const salt =
+        fileBytes.slice(
+            6,
+            22
+        );
+
+    const nonce =
+        fileBytes.slice(
+            22,
+            34
+        );
+
+    const ciphertextLength =
+        bytesToUint32(
+            fileBytes.slice(
+                34,
+                38
+            )
+        );
+
+    return {
+        salt,
+        nonce,
+        ciphertextLength,
+        header:
+            fileBytes.slice(
+                0,
+                HEADER_SIZE
+            )
+    };
+}
+
+function unpackPlaintext(payload) {
+
+    if (payload.length < 2) {
+
+        throw new Error(
+            "Invalid encrypted backup"
+        );
+    }
+
+    const seedSize =
+        (payload[0] << 8) |
+        payload[1];
+
+    if (
+        seedSize >
+        payload.length - 2
+    ) {
+
+        throw new Error(
+            "Invalid encrypted backup"
+        );
+    }
+
+    const decoder =
+        new TextDecoder();
+
+    return decoder.decode(
+        payload.slice(
+            2,
+            2 + seedSize
+        )
+    );
+}
+
+async function decryptSeed(
+    fileBytes,
+    password
+) {
+
+    const parsed =
+        parseHeader(
+            fileBytes
+        );
+
+    const keyBytes =
+        await deriveKey(
+            password,
+            parsed.salt
+        );
+
+    const cryptoKey =
+        await crypto.subtle.importKey(
+            "raw",
+            keyBytes,
+            {
+                name: "AES-GCM"
+            },
+            false,
+            ["decrypt"]
+        );
+
+    const ciphertext =
+        fileBytes.slice(
+            HEADER_SIZE
+        );
+
+    const decrypted =
+        await crypto.subtle.decrypt(
+            {
+                name: "AES-GCM",
+                iv: parsed.nonce,
+                additionalData:
+                    parsed.header
+            },
+            cryptoKey,
+            ciphertext
+        );
+
+    const payload =
+        new Uint8Array(
+            decrypted
+        );
+
+    return unpackPlaintext(
+        payload
+    );
+}
