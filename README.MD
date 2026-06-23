@@ -12,6 +12,8 @@ No telemetry.
 
 Open `index.html` and use it locally.
 
+![alt text](http://url/to/img.png)
+
 ---
 
 ## ✨ Features
