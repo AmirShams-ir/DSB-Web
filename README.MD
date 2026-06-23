@@ -117,6 +117,31 @@ AES-256-GCM Verify
 Seed Phrase
 ```
 
+```mermaid
+flowchart LR
+
+    P["Seed Phrase<br>+ Optional Word 25"]
+        --> S["Serialize and add<br>random padding"]
+
+    U["User Password"]
+        --> K["Argon2id<br>Key Derivation"]
+
+    R["Random 16-byte Salt"]
+        --> K
+
+    S --> E["AES-256-GCM"]
+
+    K --> E
+
+    N["Random 12-byte Nonce"]
+        --> E
+
+    H["Authenticated<br>Binary Header"]
+        --> E
+
+    E --> B["seed.bin"]
+```
+
 ---
 
 ## 🏗️ Project Structure
