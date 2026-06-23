@@ -1,32 +1,12 @@
-async function testCrypto() {
+function isStrongPassword(password) {
 
-    const result = await argon2.hash({
-        pass: "TestPassword123!",
-        salt: new Uint8Array(16),
-        time: 3,
-        mem: 65536,
-        parallelism: 2,
-        hashLen: 32,
-        type: argon2.ArgonType.Argon2id
-    });
-
-    console.log("Argon2 OK");
-
-    const keyBytes = result.hash;
-
-    const cryptoKey = await crypto.subtle.importKey(
-        "raw",
-        keyBytes,
-        {
-            name: "AES-GCM"
-        },
-        false,
-        ["encrypt", "decrypt"]
+    return (
+        password.length >= 12 &&
+        /[A-Z]/.test(password) &&
+        /[a-z]/.test(password) &&
+        /[0-9]/.test(password) &&
+        /[^A-Za-z0-9]/.test(password)
     );
-
-    console.log("AES-GCM OK");
-
-    console.log(cryptoKey);
 }
 
 function randomBytes(length) {
@@ -314,11 +294,13 @@ document
                 }
 
                 if (
-                    password.length < 12
+                    !isStrongPassword(
+                        password
+                    )
                 ) {
 
                     alert(
-                        "Password too short"
+                        "Password must contain at least 12 characters, uppercase, lowercase, number and special character"
                     );
 
                     return;
@@ -337,6 +319,9 @@ document
                     file,
                     "seed.bin"
                 );
+
+                document.getElementById("password").value = "";
+                document.getElementById("confirm-password").value = "";
 
                 alert(
                     "Backup encrypted successfully"
