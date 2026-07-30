@@ -340,6 +340,20 @@ See the LICENSE file for details.
 
 ---
 
+## Citation
+
+If you use DSB in your work, please cite:
+
+Shams A.
+
+DSB: Local-First Offline Backup for Cryptocurrency Seed Phrases.
+
+Zenodo.
+
+DOI:10.5281/zenodo.21710009
+
+---
+
 <div align="center">
 
 ### Fully Offline · Dependency-Free · Cross Platform
